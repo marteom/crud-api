@@ -5,7 +5,6 @@
     "start:dev": "nodemon ./server.ts",
     "start:prod": ""
   },
-  "type": "module",
   "devDependencies": {
     "nodemon": "^2.0.20",
     "ts-node": "^10.9.1",
