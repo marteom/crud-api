@@ -6,19 +6,24 @@ dotenv.config();
 const port = Number(process.env.PORT) || 8080;
 
 interface User {
-    userId: string
+    id: string,
+    username?: string,
+    age?: number,
+    hobbies?: Array<string>
 };
 const memoryApiData = new Array<User>;
-
-memoryApiData.push({userId: uuidv4()});
-memoryApiData.push({userId: uuidv4()});
-memoryApiData.push({userId: uuidv4()});
 
 enum SupportedMethods {
     GET = 'GET',
     POST = 'POST',
     PUT = 'PUT',
     DELETE = 'DELETE'
+};
+
+enum RequiredUserFields {
+    username = 'username',
+    age = 'age',
+    hobbies = 'hobbies'
 };
 
 const isApiPartsValid = (part1: string, part2: string): boolean => {
@@ -33,23 +38,6 @@ interface RequestResult {
     body?: Array<User> | User
 }
 
-const executeGetUser = (userId: string): Promise<User> => {
-    let result: User;
-
-
-    const findedUser = memoryApiData.find((el) => el.userId === userId);
-    if (!!findedUser) {
-        return new Promise((resolve, reject) => {
-            resolve(findedUser);
-        });
-    }
-
-
-    return new Promise((resolve, reject) => {
-        resolve(result);
-    });
-}
-
 const executeGet = (urlParts: Array<string>): Promise<Array<User> | User> => {
     let result: Array<User> | User;
 
@@ -58,7 +46,7 @@ const executeGet = (urlParts: Array<string>): Promise<Array<User> | User> => {
     }
 
     else if(urlParts.length === 4) {
-        const findedUser = memoryApiData.find((el) => el.userId === urlParts[3]);
+        const findedUser = memoryApiData.find((el) => el.id === urlParts[3]);
         if(!!findedUser) {
             result = findedUser;
         }
@@ -66,6 +54,15 @@ const executeGet = (urlParts: Array<string>): Promise<Array<User> | User> => {
 
     return new Promise((resolve, reject) => {
         resolve(result);
+    });
+}
+
+const executePost = (body: object): Promise<User> => {
+    const newUser = Object.assign(body, {id: uuidv4()});
+    memoryApiData.push(newUser);
+
+    return new Promise((resolve, reject) => {
+        resolve(newUser);
     });
 }
 
@@ -89,7 +86,7 @@ const isUserValid = (userId: string): Promise<boolean> => {
     });
 }
 
-const executeRequest = async (method: string | undefined, urlParts: Array<string>): Promise<RequestResult> => {
+const executeRequest = async (method: string | undefined, urlParts: Array<string>, body: object | undefined): Promise<RequestResult> => {
     let result: RequestResult = { code: 500 };
 
     if (!method || !(method in SupportedMethods)) {
@@ -128,6 +125,15 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
                 }
                 break;
             case SupportedMethods.POST:
+                if(!body || Object.keys(body).length === 0 || !checkObjectField(body, RequiredUserFields.age) || !checkObjectField(body, RequiredUserFields.username) || !checkObjectField(body, RequiredUserFields.hobbies)) {
+                    result.code = 400;
+                    result.message = 'Not all required fields found (required fields: username(string), age(number), hobbies(Array<string>))';  
+                    break;
+                }
+                const postResult = await executePost(body);
+                result.code = 201;
+                result.message = 'OK';
+                result.body = postResult;
                 break;
             case SupportedMethods.PUT:
                 break;
@@ -146,6 +152,14 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
     })
 }
 
+const checkObjectField = (inputObj: object, fieldName: string): boolean => {
+    if(Object.keys(inputObj).indexOf(fieldName) == -1) {
+        return false;
+    }   
+
+    return true;
+}
+
 http.createServer(async function (request, response) {
     response.setHeader('Content-Type', 'text/html; charset=utf-8;');
 
@@ -161,6 +175,13 @@ http.createServer(async function (request, response) {
 
     const inputUrl: string = request.url || '/';
 
+    const buffers: any[] = [];
+    for await (const chunk of request) {
+      buffers.push(chunk);
+    }
+    const data = Buffer.concat(buffers).toString();
+    let bodyData: object | undefined = buffers.length > 0 ? JSON.parse(data) : undefined;
+    
     const urlParts = inputUrl?.split('/');
     const urlPartsLen = urlParts.length;
 
@@ -169,7 +190,7 @@ http.createServer(async function (request, response) {
         return;
     }
 
-    const executeResult: RequestResult = await executeRequest(request.method, urlParts);
+    const executeResult: RequestResult = await executeRequest(request.method, urlParts, bodyData);
     setStatus(executeResult.code, executeResult.message, executeResult.body);
 
 }).listen(port);
