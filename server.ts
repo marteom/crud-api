@@ -38,6 +38,17 @@ interface RequestResult {
     body?: Array<User> | User
 }
 
+const executeDelete = async (userId: string): Promise<boolean> => {
+    const index: number = await Promise.resolve(memoryApiData.findIndex((el) => el.id === userId));
+
+    if(index !== -1) {
+        memoryApiData.splice(index, 1);
+        return true;
+    }
+
+    return false;
+}
+
 const executePut = async (body: User): Promise<User | undefined> => {
     let result: User | undefined;
     let modifyUser: User | undefined = undefined;
@@ -195,6 +206,23 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
 
                 break;
             case SupportedMethods.DELETE:
+                if (await isUserValid(urlParts[3]) === false) {
+                    result.code = 400;
+                    result.message = 'Invalid userId. Required uuid v4 format';
+                    break;
+                }
+
+                const resultDelete = await executeDelete(urlParts[3]);
+
+                if (!resultDelete) {
+                    result.code = 404;
+                    result.message = 'User not found!';
+                }
+                else {
+                    result.code = 204;
+                    result.message = 'OK';
+                }
+
                 break;
         }
     }
