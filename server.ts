@@ -1,42 +1,16 @@
 import http from 'http';
 import { v4 as uuidv4, validate as uuidValidate, version as uuidVersion } from 'uuid';
+
+import { isApiPartsValid, checkObjectField } from './src/utils';
+import { SupportedMethods, RequiredUserFields } from './src/enums';
+import { User, RequestResult } from './src/interfaces';
+
 import dotenv from 'dotenv';
 dotenv.config();
 
 const port = Number(process.env.PORT) || 8080;
 
-interface User {
-    id: string,
-    username?: string,
-    age?: number,
-    hobbies?: Array<string>
-};
 let memoryApiData = new Array<User>;
-
-enum SupportedMethods {
-    GET = 'GET',
-    POST = 'POST',
-    PUT = 'PUT',
-    DELETE = 'DELETE'
-};
-
-enum RequiredUserFields {
-    username = 'username',
-    age = 'age',
-    hobbies = 'hobbies'
-};
-
-const isApiPartsValid = (part1: string, part2: string): boolean => {
-    if (part1.toLowerCase() !== 'api') return false;
-    if (part2.toLowerCase() !== 'users') return false;
-    return true;
-}
-
-interface RequestResult {
-    code: number,
-    message?: string,
-    body?: Array<User> | User
-}
 
 const executeDelete = async (userId: string): Promise<boolean> => {
     const index: number = await Promise.resolve(memoryApiData.findIndex((el) => el.id === userId));
@@ -235,14 +209,6 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
     return new Promise((resolve, reject) => {
         resolve(result);
     })
-}
-
-const checkObjectField = (inputObj: object, fieldName: string): boolean => {
-    if (Object.keys(inputObj).indexOf(fieldName) == -1) {
-        return false;
-    }
-
-    return true;
 }
 
 http.createServer(async function (request, response) {
