@@ -11,7 +11,7 @@ interface User {
     age?: number,
     hobbies?: Array<string>
 };
-const memoryApiData = new Array<User>;
+let memoryApiData = new Array<User>;
 
 enum SupportedMethods {
     GET = 'GET',
@@ -38,16 +38,46 @@ interface RequestResult {
     body?: Array<User> | User
 }
 
+const executePut = async (body: User): Promise<User | undefined> => {
+    let result: User | undefined;
+    let modifyUser: User | undefined = undefined;
+    const memoryApiDataModify = await Promise.all(memoryApiData.map((el) => {
+        if(el.id === body.id) {
+            modifyUser = {
+                id: body.id,
+                username: !checkObjectField(body, RequiredUserFields.username) ? el.username : body[RequiredUserFields.username],
+                age: !checkObjectField(body, RequiredUserFields.age) ? el.age : body[RequiredUserFields.age],
+                hobbies: !checkObjectField(body, RequiredUserFields.hobbies) ? el.hobbies : body[RequiredUserFields.hobbies],
+            }
+            return modifyUser;
+        }
+        return el;
+    }));
+
+    memoryApiData = memoryApiDataModify;
+
+    if (!!modifyUser) {
+        result = modifyUser;
+    }
+    else {
+        result = undefined;
+    }
+
+    return new Promise((resolve, reject) => {
+        resolve(result);
+    });
+}
+
 const executeGet = (urlParts: Array<string>): Promise<Array<User> | User> => {
     let result: Array<User> | User;
 
-    if(urlParts.length === 3) {
+    if (urlParts.length === 3) {
         result = memoryApiData;
     }
 
-    else if(urlParts.length === 4) {
+    else if (urlParts.length === 4) {
         const findedUser = memoryApiData.find((el) => el.id === urlParts[3]);
-        if(!!findedUser) {
+        if (!!findedUser) {
             result = findedUser;
         }
     }
@@ -58,7 +88,7 @@ const executeGet = (urlParts: Array<string>): Promise<Array<User> | User> => {
 }
 
 const executePost = (body: object): Promise<User> => {
-    const newUser = Object.assign(body, {id: uuidv4()});
+    const newUser = Object.assign(body, { id: uuidv4() });
     memoryApiData.push(newUser);
 
     return new Promise((resolve, reject) => {
@@ -69,7 +99,7 @@ const executePost = (body: object): Promise<User> => {
 const isUserValid = (userId: string): Promise<boolean> => {
     let result: boolean;
     try {
-        if(!uuidValidate(userId) || uuidVersion(userId) !== 4) {
+        if (!uuidValidate(userId) || uuidVersion(userId) !== 4) {
             result = false;
         }
         else {
@@ -99,13 +129,13 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
     try {
         switch (method) {
             case SupportedMethods.GET:
-                if(urlParts.length === 3) { // /api/users
+                if (urlParts.length === 3) { // /api/users
                     result.code = 200;
                     result.message = 'OK';
                     result.body = memoryApiData;
                 }
-                else if(urlParts.length === 4) { // /api/users/${userId}
-                    if(await isUserValid(urlParts[3]) === false) {
+                else if (urlParts.length === 4) { // /api/users/${userId}
+                    if (await isUserValid(urlParts[3]) === false) {
                         result.code = 400;
                         result.message = 'Invalid userId. Required uuid v4 format';
                         break;
@@ -113,7 +143,7 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
 
                     const getResult = await executeGet(urlParts);
 
-                    if(!getResult) {
+                    if (!getResult) {
                         result.code = 404;
                         result.message = 'User not found!';
                     }
@@ -125,9 +155,9 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
                 }
                 break;
             case SupportedMethods.POST:
-                if(!body || Object.keys(body).length === 0 || !checkObjectField(body, RequiredUserFields.age) || !checkObjectField(body, RequiredUserFields.username) || !checkObjectField(body, RequiredUserFields.hobbies)) {
+                if (!body || Object.keys(body).length === 0 || !checkObjectField(body, RequiredUserFields.age) || !checkObjectField(body, RequiredUserFields.username) || !checkObjectField(body, RequiredUserFields.hobbies)) {
                     result.code = 400;
-                    result.message = 'Not all required fields found (required fields: username(string), age(number), hobbies(Array<string>))';  
+                    result.message = 'Not all required fields found (required fields: username(string), age(number), hobbies(Array<string>))';
                     break;
                 }
                 const postResult = await executePost(body);
@@ -136,6 +166,33 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
                 result.body = postResult;
                 break;
             case SupportedMethods.PUT:
+                if (!urlParts[3]) {
+                    result.code = 400;
+                    result.message = 'Required parameter userId not found!';
+                    break;
+                }
+                if (await isUserValid(urlParts[3]) === false) {
+                    result.code = 400;
+                    result.message = 'Invalid userId. Required uuid v4 format';
+                    break;
+                }
+                if (!body || Object.keys(body).length === 0) {
+                    result.code = 400;
+                    result.message = 'Undefined or empty body';
+                    break;
+                }
+                const putResult = await executePut(Object.assign({id: urlParts[3]}, body));
+
+                if (!putResult) {
+                    result.code = 404;
+                    result.message = 'User not found!';
+                }
+                else {
+                    result.code = 200;
+                    result.message = 'OK';
+                    result.body = putResult;
+                }
+
                 break;
             case SupportedMethods.DELETE:
                 break;
@@ -153,9 +210,9 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
 }
 
 const checkObjectField = (inputObj: object, fieldName: string): boolean => {
-    if(Object.keys(inputObj).indexOf(fieldName) == -1) {
+    if (Object.keys(inputObj).indexOf(fieldName) == -1) {
         return false;
-    }   
+    }
 
     return true;
 }
@@ -177,11 +234,11 @@ http.createServer(async function (request, response) {
 
     const buffers: any[] = [];
     for await (const chunk of request) {
-      buffers.push(chunk);
+        buffers.push(chunk);
     }
     const data = Buffer.concat(buffers).toString();
     let bodyData: object | undefined = buffers.length > 0 ? JSON.parse(data) : undefined;
-    
+
     const urlParts = inputUrl?.split('/');
     const urlPartsLen = urlParts.length;
 
