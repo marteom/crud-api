@@ -2,8 +2,9 @@
   "name": "crud-api",
   "version": "0.0.1",
   "scripts": {
-    "start:dev": "nodemon ./server.ts",
-    "start:prod": ""
+    "start:dev": "nodemon ./src/server.ts",
+    "start:build": "webpack --mode production",
+    "start:prod": "cross-env NODE_ENV=production webpack --config webpack.config.js"
   },
   "devDependencies": {
     "@types/uuid": "^9.0.0",
@@ -14,7 +15,9 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
+    "ts-loader": "^9.4.2",
     "uuid": "^9.0.0"
   }
 }

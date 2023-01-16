@@ -1,9 +1,9 @@
 import http from 'http';
 import { v4 as uuidv4, validate as uuidValidate, version as uuidVersion } from 'uuid';
 
-import { isApiPartsValid, checkObjectField } from './src/utils';
-import { SupportedMethods, RequiredUserFields } from './src/enums';
-import { User, RequestResult } from './src/interfaces';
+import { isApiPartsValid, checkObjectField } from './utils';
+import { SupportedMethods, RequiredUserFields } from './enums';
+import { User, RequestResult } from './interfaces';
 
 import dotenv from 'dotenv';
 dotenv.config();
