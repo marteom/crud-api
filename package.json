@@ -4,7 +4,7 @@
   "scripts": {
     "start:dev": "nodemon --watch '**/*.ts' --exec 'ts-node' ./src/server.ts",
     "start:build": "webpack --mode production",
-    "start:prod": "cross-env NODE_ENV=production webpack --config webpack.config.js"
+    "start:prod": "webpack && node ./dist/bundle.js"
   },
   "devDependencies": {
     "@types/uuid": "^9.0.0",
@@ -12,7 +12,8 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.3.3",
     "webpack": "^5.90.1",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
     "cross-env": "^7.0.3",
