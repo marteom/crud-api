@@ -13,12 +13,13 @@ module.exports = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    // fallback: {
-    //     "fs": false,
-    //     "path": false,
-    //     "os": false,
-    //     "http": false
-    //   }
+    fallback: {
+        "fs": false,
+        "path": false,
+        "os": false,
+        "http": false,
+        "crypto": false,
+      }
   },
   output: {
     filename: 'bundle.js',
