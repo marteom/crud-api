@@ -211,7 +211,7 @@ const executeRequest = async (method: string | undefined, urlParts: Array<string
     })
 }
 
-http.createServer(async function (request, response) {
+const server = http.createServer(async function (request, response) {
     response.setHeader('Content-Type', 'text/html; charset=utf-8;');
 
     const setStatus = (code: number, message: string = 'Incorrect api url', body?: Array<object> | object): void => {
@@ -245,3 +245,5 @@ http.createServer(async function (request, response) {
     setStatus(executeResult.code, executeResult.message, executeResult.body);
 
 }).listen(port);
+
+export default server;
