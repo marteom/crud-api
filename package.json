@@ -2,7 +2,7 @@
   "name": "crud-api",
   "version": "0.0.1",
   "scripts": {
-    "start:dev": "nodemon --watch '**/*.ts' --exec 'ts-node' ./src/server.ts",
+    "start:dev": "nodemon --watch '**/*.ts' --exec ts-node ./src/server.ts",
     "start:prod": "webpack && node ./dist/bundle.js",
     "test": "jest"
   },
